@@ -62,4 +62,20 @@ class UserController extends Controller
 
         return back()->with('success', "Akun $userName berhasil dihapus.");
     }
+
+    public function toggleStatus(User $user)
+    {
+        // Pencegahan keamanan: SPV tidak boleh menonaktifkan akun sendiri
+        if ($user->id == Auth::id()) {
+            return back()->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
+        }
+
+        // Toggle status: 1 menjadi 0, atau 0 menjadi 1
+        $user->is_active = $user->is_active == 1 ? 0 : 1;
+        $user->save();
+
+        $statusText = $user->is_active ? 'Aktif' : 'Nonaktif';
+
+        return back()->with('success', "Status user $user->name berhasil diubah menjadi $statusText.");
+    }
 }

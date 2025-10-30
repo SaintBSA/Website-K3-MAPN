@@ -37,7 +37,7 @@ class ProfileController extends Controller
 
         // 2. Update Data Dasar (Nama dan Email)
         $user->name = $request->name;
-        $user->email = $request->email;
+        //$user->email = $request->email;
 
         // 3. Update Password (hanya jika field password diisi)
         if ($request->filled('password')) {

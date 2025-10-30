@@ -50,6 +50,10 @@
         .data-value {
             color: #6c757d;
         }
+        .log-entry {
+            border-left: 4px solid #0d6efd; /* Garis biru di samping log */
+            padding-left: 15px;
+        }
     </style>
 </head>
 <body>
@@ -63,16 +67,22 @@
                 <i class="bi bi-speedometer2 me-2"></i> Dashboard
             </a>
             
-            {{-- Navigasi Lainnya Sesuai Role --}}
             @if(Auth::user()->role === 'admin')
                 <a class="nav-link text-dark rounded mb-1" href="{{ route('reports.create') }}">
                     <i class="bi bi-file-earmark-text me-2"></i> Tambah Kejadian
                 </a>
             @endif
 
-            <a class="nav-link text-dark rounded mb-1" href="{{ route('reports.index') }}">
+            {{-- TAUTAN LAPORAN HARUS AKTIF DI HALAMAN INI --}}
+            @php $isReportActive = in_array(Route::currentRouteName(), ['reports.index', 'reports.show', 'reports.edit']); @endphp
+            <a class="nav-link {{ $isReportActive ? 'active' : 'text-dark' }} rounded mb-1" href="{{ route('reports.index') }}">
                 <i class="bi bi-card-checklist me-2"></i> Laporan
             </a>
+
+            {{-- PENGATURAN PROFIL (TIDAK AKTIF di halaman ini) --}}
+    <a class="nav-link text-dark rounded mb-1" href="{{ route('profile.edit') }}">
+        <i class="bi bi-person-circle me-2"></i> Profil & Akun
+    </a>
             
             <a class="nav-link text-danger mt-4 rounded" href="{{ route('logout') }}" 
                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
@@ -109,29 +119,15 @@
                     <p class="data-value">{{ $report->incident_datetime ? \Carbon\Carbon::parse($report->incident_datetime)->format('d M Y, H:i') : 'N/A' }}</p>
                 </div>
             </div>
-
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <p class="data-label">Lokasi Kejadian:</p>
-                    <p class="data-value">{{ $report->location }}</p>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <p class="data-label">Jenis Insiden:</p>
-                    <p class="data-value">{{ $report->type }}</p>
-                </div>
-            </div>
             
+            {{-- DATA LAINNYA --}}
             <div class="row">
-                <div class="col-md-6 mb-3">
-                    <p class="data-label">Perkiraan Dampak:</p>
-                    <p class="data-value">{{ $report->impact }}</p>
-                </div>
-
-                <div class="col-md-6 mb-3">
-                    <p class="data-label">Dilaporkan Oleh:</p>
-                    <p class="data-value">{{ $report->reported_by }}</p>
-                </div>
+                <div class="col-md-6 mb-3"><p class="data-label">Lokasi Kejadian:</p><p class="data-value">{{ $report->location }}</p></div>
+                <div class="col-md-6 mb-3"><p class="data-label">Jenis Insiden:</p><p class="data-value">{{ $report->type }}</p></div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3"><p class="data-label">Perkiraan Dampak:</p><p class="data-value">{{ $report->impact }}</p></div>
+                <div class="col-md-6 mb-3"><p class="data-label">Dilaporkan Oleh:</p><p class="data-value">{{ $report->reported_by }}</p></div>
             </div>
             
             <p class="data-label mt-3">Pihak/Orang yang Terlibat (Selain Pelapor):</p>
@@ -162,13 +158,6 @@
                     <span class="badge text-bg-{{ $currentPriorityColor }} fs-6">{{ $report->priority }}</span>
                 </div>
             </div>
-            
-            {{-- Feedback SPV BARU --}}
-            <p class="data-label mt-3">Feedback / Catatan Tindak Lanjut SPV:</p>
-            <div class="alert alert-info p-3 data-value">
-                {{ $report->spv_feedback ?? 'Belum ada catatan tindak lanjut dari Supervisor.' }}
-            </div>
-
 
             {{-- LAMPIRAN BUKTI --}}
             <h5 class="mt-4 mb-3 text-primary fw-semibold">Lampiran Bukti</h5>
@@ -178,7 +167,7 @@
                 @if($report->media_path)
                     @php
                         $extension = pathinfo($report->media_path, PATHINFO_EXTENSION);
-                        $extension = strtoupper($extension); // Untuk tampilan: PNG, JPG, MP4
+                        $extension = strtoupper($extension);
                     @endphp
                     <p class="ms-2">
                         <i class="bi bi-paperclip me-1"></i> 
@@ -190,6 +179,40 @@
                     <p class="ms-2 text-muted">Tidak ada lampiran yang diunggah.</p>
                 @endif
             </div>
+
+            {{-- RIWAYAT STATUS LOG BARU --}}
+        <h5 class="mt-4 mb-3 text-secondary fw-semibold">Riwayat Status Laporan</h5>
+        <hr>
+        
+        @forelse($report->statusLogs->sortByDesc('action_at') as $log)
+            <div class="log-entry border-start border-3 border-{{ $log->new_status == 'Closed' ? 'secondary' : 'secondary' }} ps-3 mb-3 card card-k3 p-3">
+                <p class="small mb-1">
+                    <strong>{{ $log->user->name ?? 'Sistem' }}</strong> mengubah status pada 
+                    {{ \Carbon\Carbon::parse($log->action_at)->format('d M Y H:i') }}
+                </p>
+                
+                @if ($log->old_status != $log->new_status)
+                    <p class="small mb-0">Status: 
+                        <span class="badge text-bg-secondary">{{ $log->old_status ?? 'Diajukan' }}</span> 
+                        <i class="bi bi-arrow-right"></i> 
+                        <span class="badge text-bg-info">{{ $log->new_status }}</span>
+                    </p>
+                @endif
+                
+                @if ($log->old_priority != $log->new_priority)
+                    <p class="small mb-0">Prioritas diubah dari 
+                        <span class="badge text-bg-secondary">{{ $log->old_priority ?? 'Rendah' }}</span> ke 
+                        <span class="badge text-bg-danger">{{ $log->new_priority }}</span>
+                    </p>
+                @endif
+                
+                @if ($log->feedback)
+                    <p class="small mt-1 mb-0">Keterangan : "{{ $log->feedback }}"</p>
+                @endif
+            </div>
+        @empty
+            <p class="text-muted small">Belum ada riwayat perubahan status</p>
+        @endforelse
 
             {{-- Tombol Aksi (Hanya muncul jika SPV) --}}
             @if(Auth::user()->role === 'spv')

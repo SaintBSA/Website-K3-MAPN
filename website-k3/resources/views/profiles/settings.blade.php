@@ -9,46 +9,26 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
         /* CSS DARI FILE LAIN UNTUK KONSISTENSI */
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #f4f7f9; 
-        }
-        .sidebar { 
-            width: 250px; 
-            min-height: 100vh; 
-            background-color: #ffffff; 
-            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05); 
-            position: fixed; 
-            top: 0; 
-            left: 0; 
-            padding-top: 20px; 
-        }
-        .main-content { 
-            margin-left: 250px; 
-            padding: 30px; 
-        }
-        .card-k3 { 
-            border: none; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); 
-        }
-        .nav-link.active {
-            background-color: #e6f7ff !important;
-            color: #0d6efd !important;
-            border-left: 4px solid #0d6efd;
-            font-weight: 600;
-        }
-        .nav-link {
-            transition: all 0.2s;
-            color: #212529; /* Pastikan teks non-aktif berwarna gelap */
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #f4f7f9; }
+        .sidebar { width: 250px; min-height: 100vh; background-color: #ffffff; box-shadow: 2px 0 5px rgba(0, 0, 0, 0.05); position: fixed; top: 0; left: 0; padding-top: 20px; }
+        .main-content { margin-left: 250px; padding: 30px; }
+        .card-k3 { border: none; border-radius: 12px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); }
+        .nav-link.active { background-color: #e6f7ff !important; color: #0d6efd !important; border-left: 4px solid #0d6efd; font-weight: 600; }
+        .nav-link { transition: all 0.2s; color: #212529; }
     </style>
 </head>
 <body>
 
+@php
+    $userRole = Auth::user()->role;
+    // Teks yang akan ditampilkan di UI
+    $displayRole = ($userRole == 'admin') ? 'USER' : strtoupper($userRole);
+    // Teks yang akan ditampilkan di sidebar (juga menggunakan displayRole)
+@endphp
+
 <div class="sidebar d-flex flex-column">
     <div class="p-3 mb-4 text-center">
-        <h5 class="fw-bold text-primary">K3 MAPN System ({{ strtoupper(Auth::user()->role) }})</h5>
+        <h5 class="fw-bold text-primary">K3 MAPN System ({{ $displayRole }})</h5>
     </div>
     
     {{-- START: NAVIGASI YANG DIMINTA --}}
@@ -60,14 +40,14 @@
         </a>
         
         {{-- FITUR 3: INPUT FORM LAPORAN (Hanya Admin) --}}
-        @if(Auth::user()->role === 'admin')
+        @if($userRole === 'admin')
             <a class="nav-link text-dark rounded mb-1" href="{{ route('reports.create') }}">
                 <i class="bi bi-file-earmark-text me-2"></i> Tambah Kejadian
             </a>
         @endif
 
         {{-- FITUR 5: LIHAT RIWAYAT DETAIL LAPORAN (Admin & SPV) --}}
-        @if(Auth::user()->role === 'admin' || Auth::user()->role === 'spv')
+        @if($userRole === 'admin' || $userRole === 'spv')
             <a class="nav-link text-dark rounded mb-1" href="{{ route('reports.index') }}">
                 <i class="bi bi-card-checklist me-2"></i> Laporan
             </a>
@@ -78,14 +58,14 @@
             <i class="bi bi-person-circle me-2"></i> Profil & Akun
         </a>
 
-        @if(Auth::user()->role === 'spv')
-    <a class="nav-link text-dark rounded mb-1" href="{{ route('user.index') }}">
-        <i class="bi bi-people me-2"></i> User Management
-    </a>
-@endif
+        @if($userRole === 'spv')
+            <a class="nav-link text-dark rounded mb-1" href="{{ route('user.index') }}">
+                <i class="bi bi-people me-2"></i> User Management
+            </a>
+        @endif
         
         {{-- PENGATURAN MASTER (Hanya SPV) --}}
-        @if(Auth::user()->role === 'spv')
+        @if($userRole === 'spv')
             <a class="nav-link text-dark rounded mb-1" href="{{ route('master.settings') }}">
                 <i class="bi bi-gear me-2"></i> Master Settings
             </a>
@@ -126,7 +106,7 @@
                         {{-- Formulir Update --}}
                         <form method="POST" action="{{ route('profile.update') }}">
                             @csrf
-                            @method('PUT') {{-- Penting: Gunakan method PUT --}}
+                            @method('PUT') 
 
                             {{-- Nama --}}
                             <div class="mb-3">
@@ -137,18 +117,17 @@
                                 @enderror
                             </div>
 
-                            {{-- Email --}}
+                            {{-- Email (READONLY) --}}
                             <div class="mb-3">
                                 <label for="email" class="form-label">Alamat Email</label>
-                                <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email', Auth::user()->email) }}" required>
-                                @error('email')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <input type="email" class="form-control" id="email" value="{{ Auth::user()->email }}" readonly disabled>
+                                <input type="hidden" name="email" value="{{ Auth::user()->email }}">
                             </div>
+
 
                             <hr class="my-4">
                             <p class="text-muted small">Isi kolom di bawah ini HANYA JIKA Anda ingin mengubah password Anda.</p>
-
+                            
                             {{-- Password Baru --}}
                             <div class="mb-3">
                                 <label for="password" class="form-label">Password Baru</label>
@@ -163,6 +142,17 @@
                                 <label for="password_confirmation" class="form-label">Konfirmasi Password Baru</label>
                                 <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
                                 <small class="form-text text-muted">Harus sama dengan Password Baru di atas.</small>
+                            </div>
+
+                            <hr class="my-4">
+
+                            {{-- PASSWORD LAMA/SAAT INI (Wajib diisi untuk semua perubahan) --}}
+                            <div class="mb-3">
+                                <label for="current_password" class="form-label">Password Saat Ini <span class="text-danger">(Wajib)</span></label>
+                                <input type="password" class="form-control @error('current_password') is-invalid @enderror" id="current_password" name="current_password" required placeholder="Masukkan password Anda saat ini">
+                                @error('current_password')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                             
                             <button type="submit" class="btn btn-success mt-3"><i class="bi bi-save me-2"></i> Simpan Perubahan</button>
@@ -180,7 +170,10 @@
                     <div class="card-body">
                         <dl class="row">
                             <dt class="col-sm-4">Role Akun</dt>
-                            <dd class="col-sm-8"><span class="badge text-bg-primary">{{ strtoupper(Auth::user()->role) }}</span></dd>
+                            <dd class="col-sm-8">
+                                {{-- Menampilkan role dengan teks "USER" jika admin --}}
+                                <span class="badge text-bg-primary">{{ $displayRole }}</span>
+                            </dd>
 
                             <dt class="col-sm-4">Nama User</dt>
                             <dd class="col-sm-8">{{ Auth::user()->name }}</dd>

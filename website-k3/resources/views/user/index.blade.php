@@ -23,8 +23,8 @@
     {{-- SIDEBAR --}}
     <div class="sidebar d-flex flex-column">
         <div class="p-3 mb-4 text-center">
-            <h5 class="fw-bold text-primary">K3 MAPN System ({{ strtoupper(Auth::user()->role) }})</h5>
-        </div>
+    <h5 class="fw-bold text-primary">K3 MAPN System ({{ strtoupper(Auth::user()->role) == 'ADMIN' ? 'USER' : strtoupper(Auth::user()->role) }})</h5>
+</div>
         <nav class="nav flex-column px-3">
             <a class="nav-link text-dark rounded mb-1" href="{{ route('home') }}">
                 <i class="bi bi-speedometer2 me-2"></i> Dashboard
@@ -69,43 +69,72 @@
         <table class="table table-striped align-middle mb-0">
             <thead>
                 <tr>
-                    <th style="width: 25%;">Nama</th>
-                    <th style="width: 30%;">Email</th>
+                    <th style="width: 20%;">Nama</th>
+                    <th style="width: 25%;">Email</th>
                     <th style="width: 15%;">Role</th>
-                    <th style="width: 15%;" class="text-end">Ubah Role</th>
+                    <th style="width: 10%;">Status</th>
+                    <th style="width: 30%;" class="text-end">Aksi Manajemen</th> {{-- KOLOM UNTUK SEMUA AKSI --}}
                 </tr>
             </thead>
             <tbody>
                 @forelse($users as $user)
+                    @php
+                        // Logika Teks Display: Ubah 'admin' menjadi 'USER' untuk ditampilkan
+                        $displayRole = ($user->role == 'admin') ? 'USER' : strtoupper($user->role ?? 'Unassigned');
+                        
+                        // Logika Warna Badge: Gunakan danger untuk USER (aslinya admin)
+                        $badgeClass = ($user->role == 'admin') ? 'danger' : (($user->role == 'spv') ? 'primary' : 'secondary');
+                    @endphp
                     <tr>
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->email }}</td>
                         <td>
-                            <span class="badge text-bg-{{ $user->role == 'admin' ? 'danger' : ($user->role == 'spv' ? 'primary' : 'secondary') }}">
-                                {{ strtoupper($user->role ?? 'Unassigned') }}
+                            {{-- TAMPILAN ROLE --}}
+                            <span class="badge text-bg-{{ $badgeClass }}">
+                                {{ $displayRole }}
                             </span>
                         </td>
-                        <td class="text-end"> {{-- Seluruh aksi ditaruh di sini dan diratakan kanan --}}
-                            {{-- FORM UPDATE ROLE --}}
-                            <form method="POST" action="{{ route('user.update.role', $user->id) }}" style="display: flex; gap: 5px; justify-content: flex-end;">
-                                @csrf
-                                @method('PUT')
+                        <td>
+                            {{-- TAMPILAN STATUS --}}
+                            <span class="badge text-bg-{{ $user->is_active ? 'success' : 'secondary' }}">
+                                {{ $user->is_active ? 'Aktif' : 'Nonaktif' }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div style="display: flex; gap: 5px; justify-content: flex-end; align-items: center;">
                                 
-                                <select name="role" class="form-select form-select-sm" style="width: 150px;" required>
-                                    <option value="unassigned" {{ is_null($user->role) ? 'selected' : '' }}>Unassigned</option>
-                                    @foreach($roles as $role)
-                                        <option value="{{ $role }}" {{ $user->role == $role ? 'selected' : '' }}>
-                                            {{ strtoupper($role) }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <button type="submit" class="btn btn-sm btn-success" style="width: 81px;">Update</button>
-                            </form>
+                                {{-- 1. FORM UPDATE ROLE (Dropdown + Tombol Update) --}}
+                                <form method="POST" action="{{ route('user.update.role', $user->id) }}" style="display: flex; gap: 5px; justify-content: flex-end; align-items: center;">
+                                    @csrf
+                                    @method('PUT')
+                                    
+                                    <select name="role" class="form-select form-select-sm" style="width: 140px;" required>
+                                        <option value="unassigned" {{ is_null($user->role) ? 'selected' : '' }}>Unassigned</option>
+                                        @foreach($roles as $role)
+                                            {{-- Perubahan Teks di Dropdown --}}
+                                            <option value="{{ $role }}" {{ $user->role == $role ? 'selected' : '' }}>
+                                                {{ ($role == 'admin') ? 'USER' : strtoupper($role) }} 
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                                </form>
+                                
+                                {{-- 2. FORM TOGGLE STATUS (Tombol Merah/Hijau di paling kanan) --}}
+                                <form method="POST" action="{{ route('user.toggle.status', $user->id) }}" style="display:inline;">
+                                    @csrf
+                                    @method('PUT')
+                                    <button type="submit" class="btn btn-sm btn-{{ $user->is_active ? 'danger' : 'success' }}" 
+                                            onclick="return confirm('Yakin ingin {{ $user->is_active ? 'NONAKTIFKAN' : 'AKTIFKAN' }} user {{ strtoupper($user->name) }}?');">
+                                        <i class="bi bi-power"></i> 
+                                    </button>
+                                </form>
+                            </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="text-center">Tidak ada pengguna lain yang terdaftar.</td>
+                        <td colspan="5" class="text-center">Tidak ada pengguna lain yang terdaftar.</td>
                     </tr>
                 @endforelse
             </tbody>

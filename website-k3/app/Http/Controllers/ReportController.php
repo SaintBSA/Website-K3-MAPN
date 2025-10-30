@@ -5,13 +5,14 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Report;
 use App\Models\MasterOption;
+use App\Models\StatusLog; // <-- IMPORT MODEL LOG
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 class ReportController extends Controller
 {
 
-public function index(Request $request) 
+    public function index(Request $request) 
     {
         // 1. Ambil data master untuk dropdown filter
         $types = MasterOption::where('category', 'jenis')->where('is_active', 1)->get();
@@ -20,20 +21,15 @@ public function index(Request $request)
         // 2. Inisiasi Query Dasar
         $reportsQuery = Report::query();
 
-        // 3. Terapkan Filter
-
-        // Filter Jenis (type)
+        // 3. Terapkan Filter (Logic sama seperti sebelumnya)
         if ($request->filled('type')) {
             $reportsQuery->where('type', $request->input('type'));
         }
 
-        // Filter Lokasi (location)
         if ($request->filled('location')) {
             $reportsQuery->where('location', $request->input('location'));
         }
         
-        // Filter Tanggal Kejadian (incident_datetime)
-        // Kolom incident_datetime harus ada di tabel reports
         if ($request->filled('date_from')) {
             $reportsQuery->whereDate('incident_datetime', '>=', $request->input('date_from'));
         }
@@ -41,10 +37,8 @@ public function index(Request $request)
         if ($request->filled('date_to')) {
             $reportsQuery->whereDate('incident_datetime', '<=', $request->input('date_to'));
         }
-        
-        // Catatan: Filter 'search' telah dihapus dari controller ini.
 
-        // 4. Terapkan Sorting (Tanggal Lapor)
+        // 4. Terapkan Sorting
         $sortBy = $request->input('sort', 'latest');
 
         if ($sortBy == 'oldest') {
@@ -56,129 +50,136 @@ public function index(Request $request)
         // 5. Eksekusi Query dan Ambil Data
         $reports = $reportsQuery->get();
 
-        // Kirimkan semua data ke view, termasuk filter yang aktif
         return view('reports.index', compact('reports', 'types', 'locations'));
     }
 
-    protected function getChartData()
-{
-    // Mengambil laporan tertunda paling mendesak (contoh: 5 laporan prioritas tertinggi)
-    $urgentReports = Report::where('status', 'Pending')
-                           ->orderByRaw("FIELD(priority, 'Tinggi', 'Sedang', 'Rendah')")
-                           ->limit(5)
-                           ->get();
-
-    return [
-        'urgentReports' => $urgentReports,
-        // Chart.js data akan tetap menggunakan dummy, kecuali Anda ingin mengembangkannya
-    ];
-}
-
     public function create()
-{
-        // Ambil hanya data Lokasi, Jenis, dan Dampak yang akan ditampilkan
+    {
         $locations = MasterOption::where('category', 'lokasi')->where('is_active', 1)->get();
         $types = MasterOption::where('category', 'jenis')->where('is_active', 1)->get();
         $impacts = MasterOption::where('category', 'dampak')->where('is_active', 1)->get();
         
-        // Prioritas dan Status tidak perlu diambil karena diset otomatis/disabled
         return view('reports.create', compact('locations', 'types', 'impacts'));
     }
 
     public function store(Request $request)
     {
-        // Validasi input
         $request->validate([
             'description' => 'required|string',
             'location' => 'required|string',
             'type' => 'required|string',
             'impact' => 'required|string',
             
-            // Bidang Baru
-            'incident_datetime' => 'nullable|date', // Diganti dari tanggalWaktu ke incident_datetime
-            'involved_parties' => 'nullable|string|max:255', // Diganti dari pihakTerlibat ke involved_parties
-            'media' => 'nullable|file|mimes:jpg,jpeg,png,mp4|max:20480', // Asumsi satu file upload
+            'incident_datetime' => 'nullable|date',
+            'involved_parties' => 'nullable|string|max:255',
+            'media' => 'nullable|file|mimes:jpg,jpeg,png,mp4|max:20480',
         ]);
 
-        // Buat objek laporan baru
         $report = new Report;
         $report->description = $request->description;
         $report->location = $request->location;
         $report->type = $request->type;
         $report->impact = $request->impact;
         
-        // Data Otomatis & Baru
-        $report->incident_datetime = $request->incident_datetime; // Simpan waktu kejadian
-        $report->involved_parties = $request->involved_parties; // Simpan pihak terlibat
+        $report->incident_datetime = $request->incident_datetime;
+        $report->involved_parties = $request->involved_parties;
         $report->reported_by = Auth::user()->name; 
         
-        // Status dan Prioritas Awal (Sesuai Konsep Desain)
-        $report->status = 'Pending'; // Set default Status
-        $report->priority = 'Rendah'; // Set default Prioritas (akan diubah SPV)
+        $report->status = 'Pending'; 
+        $report->priority = 'Rendah'; 
 
-    if ($request->hasFile('media')) {
-        $file = $request->file('media');
-        $fileName = $file->hashName(); // Nama file unik
-        $folderPath = 'reports';      // Subfolder di dalam disk 'public'
-
-        try {
-            // Gunakan Storage Facade untuk penyimpanan yang lebih eksplisit
-            // Menyimpan ke: storage/app/public/reports/
-            $filePath = Storage::disk('public')->putFileAs($folderPath, $file, $fileName);
-
-            // Jika penyimpanan berhasil, simpan path relatif di database: reports/namafile.png
-            $report->media_path = $filePath; 
-
-        } catch (\Exception $e) {
-            // DEBUGGING: Tambahkan log jika penyimpanan gagal
-            \Log::error('File upload failed: ' . $e->getMessage());
-            // Anda mungkin ingin mengembalikan error ke user di sini
-            return back()->withInput()->withErrors(['media' => 'Gagal mengunggah file. Cek izin folder.']);
+        if ($request->hasFile('media')) {
+            $file = $request->file('media');
+            $fileName = $file->hashName();
+            $folderPath = 'reports'; 
+            
+            try {
+                 $filePath = Storage::disk('public')->putFileAs($folderPath, $file, $fileName);
+                 $report->media_path = $filePath; 
+            } catch (\Exception $e) {
+                 \Log::error('File upload failed: ' . $e->getMessage());
+                 return back()->withInput()->withErrors(['media' => 'Gagal mengunggah file. Cek izin folder.']);
+            }
         }
-    }
-    // END: LOGIKA PENYIMPANAN YANG EKSPLISIT
 
-    // 3. SIMPAN OBJEK KE DATABASE
-    $report->save();
+        $report->save();
+        
+        // CATAT LOG AWAL: Status awal 'Pending' dan Prioritas 'Rendah'
+        StatusLog::create([
+            'report_id' => $report->id,
+            'user_id' => Auth::id(),
+            'old_status' => null, // Status awal belum ada
+            'new_status' => $report->status,
+            'old_priority' => null,
+            'new_priority' => $report->priority,
+            'feedback' => 'Laporan awal diajukan oleh ' . $report->reported_by . '.', 
+            'action_at' => now(), 
+        ]);
+
 
         return redirect()->route('reports.index')->with('success', 'Laporan berhasil diajukan! Menunggu peninjauan Tim K3.');
     }
 
     public function edit($id)
     {
-        $report = Report::findOrFail($id);
+        // MUAT LOG HISTORY di sini
+        $report = Report::with('statusLogs.user')->findOrFail($id); 
         $statuses = MasterOption::where('category', 'status')->where('is_active', 1)->get();
         $priorities = MasterOption::where('category', 'prioritas')->where('is_active', 1)->get();
         
         return view('reports.edit', compact('report', 'statuses', 'priorities'));
     }
 
-public function update(Request $request, $id)
-{
-    $report = Report::findOrFail($id);
-    
-    // 1. Tambahkan validasi untuk feedback
-    $request->validate([
-        'status' => 'required|string',
-        'priority' => 'required|string',
-        'spv_feedback' => 'nullable|string', // Validasi feedback (opsional)
-    ]);
+    public function update(Request $request, $id)
+    {
+        $report = Report::findOrFail($id);
+        
+        // Simpan nilai lama sebelum update
+        $oldStatus = $report->status;
+        $oldPriority = $report->priority;
+        
+        // 1. Validasi
+        $request->validate([
+            'status' => 'required|string',
+            'priority' => 'required|string',
+            'spv_feedback' => 'nullable|string', 
+        ]);
 
-    // 2. Simpan nilai baru
-    $report->status = $request->status;
-    $report->priority = $request->priority;
-    
-    // 3. Simpan feedback dari SPV (nilai bisa null)
-    $report->spv_feedback = $request->spv_feedback; 
-    
-    $report->save();
+        // 2. Update data Report
+        $report->status = $request->status;
+        $report->priority = $request->priority;
+        $report->spv_feedback = $request->spv_feedback; 
+        
+        $report->save();
 
-    return redirect()->route('reports.index')->with('success', 'Status dan feedback laporan berhasil diperbarui!');
-}
+        // 3. LOGIKA TRACKING BARU: Catat Perubahan Status/Prioritas
+        $feedbackProvided = $request->filled('spv_feedback');
+        
+        // Cek apakah ada perubahan status ATAU perubahan prioritas
+        if ($oldStatus != $report->status || $oldPriority != $report->priority || $feedbackProvided) {
+            
+            StatusLog::create([
+                'report_id' => $report->id,
+                'user_id' => Auth::id(),
+                'old_status' => $oldStatus,
+                'new_status' => $report->status,
+                'old_priority' => $oldPriority,
+                'new_priority' => $report->priority,
+                'feedback' => $request->spv_feedback, 
+                'action_at' => now(), 
+            ]);
+            
+        } 
+        // Jika tidak ada perubahan status/prioritas dan tidak ada feedback baru, tidak perlu log.
+
+
+        return redirect()->route('reports.index')->with('success', 'Status dan feedback laporan berhasil diperbarui!');
+    }
 
     public function show($id)
     {
-        $report = Report::findOrFail($id);
+        // MUAT LOG HISTORY di sini
+        $report = Report::with('statusLogs.user')->findOrFail($id);
         return view('reports.show', compact('report'));
     }
 }

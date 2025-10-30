@@ -55,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/user/management', [UserController::class, 'index'])->name('user.index');
         Route::put('/user/{user}', [UserController::class, 'updateRole'])->name('user.update.role');
         Route::delete('/user/{user}', [UserController::class, 'destroy'])->name('user.destroy');
+        Route::put('/user/{user}/status', [UserController::class, 'toggleStatus'])->name('user.toggle.status');
     });
 
     // Rute yang dapat diakses oleh Admin dan SPV

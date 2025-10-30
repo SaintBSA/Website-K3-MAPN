@@ -63,8 +63,8 @@
 
     <div class="sidebar d-flex flex-column">
         <div class="p-3 mb-4 text-center">
-            <h5 class="fw-bold text-primary">K3 MAPN System ({{ strtoupper(Auth::user()->role) }})</h5>
-        </div>
+    <h5 class="fw-bold text-primary">K3 MAPN System ({{ strtoupper(Auth::user()->role) == 'ADMIN' ? 'USER' : strtoupper(Auth::user()->role) }})</h5>
+</div>
         <nav class="nav flex-column px-3">
     
     {{-- Tentukan route saat ini untuk membandingkan --}}

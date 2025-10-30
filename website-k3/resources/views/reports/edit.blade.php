@@ -63,6 +63,10 @@
             background-color: #0b5ed7;
             border-color: #0b5ed7;
         }
+        .log-entry {
+            border-left: 4px solid #0d6efd; /* Garis biru di samping log */
+            padding-left: 15px;
+        }
     </style>
 </head>
 <body>
@@ -70,29 +74,60 @@
     <div class="sidebar d-flex flex-column">
         <div class="p-3 mb-4 text-center">
             <h5 class="fw-bold text-primary">K3 MAPN System ({{ strtoupper(Auth::user()->role) }})</h5>
-            <small class="text-muted">User Role: {{ Auth::user()->role }}</small>
         </div>
         <nav class="nav flex-column px-3">
-            <a class="nav-link text-dark rounded mb-1" href="{{ route('home') }}">
-                <i class="bi bi-speedometer2 me-2"></i> Dashboard
-            </a>
-            
-            <a class="nav-link text-dark rounded mb-1" href="{{ route('reports.index') }}">
-                <i class="bi bi-card-checklist me-2"></i> Semua Laporan
-            </a>
-            
-            <a class="nav-link active rounded mb-1" href="{{ route('reports.edit', $report->id) }}">
-                <i class="bi bi-search me-2"></i> Peninjauan Laporan
-            </a>
-            
-            <a class="nav-link text-danger mt-4 rounded" href="{{ route('logout') }}" 
-               onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                <i class="bi bi-box-arrow-right me-2"></i> Keluar
-            </a>
-             <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                @csrf
-            </form>
-        </nav>
+    
+    {{-- Tentukan route saat ini untuk membandingkan --}}
+    @php $currentRoute = Route::currentRouteName(); @endphp
+    
+    {{-- DASHBOARD --}}
+    <a class="nav-link {{ $currentRoute == 'home' ? 'active' : 'text-dark' }} rounded mb-1" href="{{ route('home') }}">
+        <i class="bi bi-speedometer2 me-2"></i> Dashboard
+    </a>
+    
+    {{-- FITUR 3: INPUT FORM LAPORAN (Hanya Admin) --}}
+    @if(Auth::user()->role === 'admin')
+        <a class="nav-link {{ $currentRoute == 'reports.create' ? 'active' : 'text-dark' }} rounded mb-1" href="{{ route('reports.create') }}">
+            <i class="bi bi-file-earmark-text me-2"></i> Tambah Kejadian
+        </a>
+    @endif
+
+    {{-- FITUR 5: LAPORAN (Riwayat, Show, Edit) --}}
+    {{-- Aktif jika berada di halaman index, show, atau edit laporan --}}
+    @php
+        $isReportActive = in_array($currentRoute, ['reports.index', 'reports.show', 'reports.edit']);
+    @endphp
+    <a class="nav-link {{ $isReportActive ? 'active' : 'text-dark' }} rounded mb-1" href="{{ route('reports.index') }}">
+        <i class="bi bi-card-checklist me-2"></i> Laporan
+    </a>
+
+    {{-- PENGATURAN PROFIL (TIDAK AKTIF di halaman ini) --}}
+    <a class="nav-link text-dark rounded mb-1" href="{{ route('profile.edit') }}">
+        <i class="bi bi-person-circle me-2"></i> Profil & Akun
+    </a>
+
+    @if(Auth::user()->role === 'spv')
+    <a class="nav-link text-dark rounded mb-1" href="{{ route('user.index') }}">
+        <i class="bi bi-people me-2"></i> User Management
+    </a>
+@endif
+    
+    {{-- PENGATURAN MASTER (Hanya SPV) --}}
+    @if(Auth::user()->role === 'spv')
+        <a class="nav-link {{ $currentRoute == 'master.settings' ? 'active' : 'text-dark' }} rounded mb-1" href="{{ route('master.settings') }}">
+            <i class="bi bi-gear me-2"></i> Master Settings
+        </a>
+    @endif
+    
+    {{-- LOGOUT --}}
+    <a class="nav-link text-danger mt-4 rounded" href="{{ route('logout') }}" 
+       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+        <i class="bi bi-box-arrow-right me-2"></i> Keluar
+    </a>
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+        @csrf
+    </form>
+</nav>
     </div>
 
     <div class="main-content">
@@ -155,7 +190,7 @@
                     <textarea class="form-control" id="deskripsi" rows="4" readonly disabled>{{ $report->description }}</textarea>
                 </div>
 
-                {{-- LAMPIRAN BUKTI --}}
+                {{-- LAMPIRAN BUKTI (Diambil dari show.blade.php yang sudah disempurnakan) --}}
                 <div class="mb-4">
                     <label class="form-label fw-semibold">Lampiran Bukti</label>
                     @if($report->media_path)
@@ -217,7 +252,40 @@
             </form>
             {{-- AKHIR FORM --}}
         </div>
-
+        
+        {{-- RIWAYAT STATUS LOG BARU --}}
+        <h5 class="mt-4 mb-3 text-secondary fw-semibold">Riwayat Status Laporan</h5>
+        <hr>
+        
+        @forelse($report->statusLogs->sortByDesc('action_at') as $log)
+            <div class="log-entry border-start border-3 border-{{ $log->new_status == 'Closed' ? 'secondary' : 'secondary' }} ps-3 mb-3 card card-k3 p-3">
+                <p class="small mb-1">
+                    <strong>{{ $log->user->name ?? 'Sistem' }}</strong> mengubah status pada 
+                    {{ \Carbon\Carbon::parse($log->action_at)->format('d M Y H:i') }}
+                </p>
+                
+                @if ($log->old_status != $log->new_status)
+                    <p class="small mb-0">Status: 
+                        <span class="badge text-bg-secondary">{{ $log->old_status ?? 'Diajukan' }}</span> 
+                        <i class="bi bi-arrow-right"></i> 
+                        <span class="badge text-bg-info">{{ $log->new_status }}</span>
+                    </p>
+                @endif
+                
+                @if ($log->old_priority != $log->new_priority)
+                    <p class="small mb-0">Prioritas diubah dari 
+                        <span class="badge text-bg-secondary">{{ $log->old_priority ?? 'Rendah' }}</span> ke 
+                        <span class="badge text-bg-danger">{{ $log->new_priority }}</span>
+                    </p>
+                @endif
+                
+                @if ($log->feedback)
+                    <p class="small mt-1 mb-0 fst-italic">Catatan: "{{ $log->feedback }}"</p>
+                @endif
+            </div>
+        @empty
+            <p class="text-muted small">Belum ada riwayat perubahan status.</p>
+        @endforelse
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

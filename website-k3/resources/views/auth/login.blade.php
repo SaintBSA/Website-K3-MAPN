@@ -4,19 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Pelaporan K3 - MAPN Group</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
     <style>
-        /* Gaya Kustom dari HTML Anda */
+        /* Gaya Kustom dari HTML Anda (Dibiarkan sama) */
         body {
             font-family: 'Inter', sans-serif; 
             background-color: #f8f9fa;
         }
         .k3-background {
-            /* Pastikan path ke safetybg.jpeg sudah benar */
-            background-image: url('{{ asset('') }}'); 
+            background-image: url('{{ asset('assets/image/safetybg.jpeg') }}'); 
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -55,7 +54,6 @@
             font-weight: 600;
             color: #343a40;
         }
-        /* Input Lebih Besar dan Matang */
         .form-floating input.form-control {
             border-radius: 8px;
             border-color: #ced4da; 
@@ -94,91 +92,100 @@
         .input-group-password {
             position: relative;
         }
-        /* Style untuk validasi Laravel */
         .form-floating .is-invalid {
             border-color: #dc3545!important;
         }
-        .form-floating .invalid-feedback {
-            position: absolute;
-            bottom: -20px;
-            left: 0;
-            width: 100%;
+        /* Memperbaiki posisi pesan invalid-feedback agar tidak menimpa elemen lain */
+        .invalid-feedback {
+            margin-top: 0.25rem; /* Tambahkan sedikit margin atas */
             font-size: 0.875em;
             text-align: left;
+            display: block; /* Pastikan selalu ditampilkan di bawah elemen jika ada error */
         }
     </style>
 </head>
 <body>
 
-    <div class="k3-background">
-        <div class="login-container text-center">
-            
-            <img src="{{ asset('assets/OIP.jpeg') }}" alt="MAPN Logo" class="logo-mapn mb-4">
-            
-            <h1 class="h5 mb-2 login-title">Sistem Pelaporan K3</h1>
-            <p class="text-muted mb-4">MAPN Group Production Facility</p>
+<div class="k3-background">
+    <div class="login-container text-center">
+        
+        <img src="{{ asset('assets/OIP.jpeg') }}" alt="MAPN Logo" class="logo-mapn mb-4">
+        
+        <h1 class="h5 mb-2 login-title">Sistem Pelaporan K3</h1>
+        <p class="text-muted mb-4">MAPN Group Production Facility</p>
 
-            {{-- INTEGRASI FORM LARAVEL --}}
-            <form method="POST" action="{{ route('login') }}">
-                @csrf
+        {{-- BLOK PEMBERITAHUAN ERROR GLOBAL --}}
+        @if ($errors->any())
+            <div class="alert alert-danger mb-4 text-start">
+                Login Gagal. Mohon periksa kembali Email dan Password Anda.
+                {{-- Anda bisa menampilkan detail error jika diperlukan, tapi ini lebih baik untuk user experience --}}
+            </div>
+        @endif
+        
+        {{-- INTEGRASI FORM LARAVEL --}}
+        <form method="POST" action="{{ route('login') }}">
+            @csrf
+            
+            <div class="form-floating mb-3">
+                <input type="email" class="form-control @error('email') is-invalid @enderror" id="floatingInput" 
+                       placeholder="name@example.com" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
+                <label for="floatingInput">Alamat Email Perusahaan</label>
                 
-                <div class="form-floating mb-3">
-                    <input type="email" class="form-control @error('email') is-invalid @enderror" id="floatingInput" 
-                           placeholder="name@example.com" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
-                    <label for="floatingInput">Alamat Email Perusahaan</label>
-                    
-                    @error('email')
-                        <span class="invalid-feedback" role="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
-                    @enderror
-                </div>
-                
-                <div class="input-group-password form-floating mb-4">
-                    <input type="password" class="form-control @error('password') is-invalid @enderror" id="floatingPassword" 
-                           placeholder="Kata Sandi" name="password" required autocomplete="current-password">
-                    <label for="floatingPassword">Kata Sandi</label>
-                    <span class="password-toggle" id="togglePassword">
-                        <i class="bi bi-eye-slash"></i> </span>
-
-                    @error('password')
-                        <span class="invalid-feedback" role="alert">
-                            <strong>{{ $message }}</strong>
-                        </span>
-                    @enderror
-                </div>
-
-                <div class="d-grid gap-2">
-                    <button class="btn btn-lg btn-primary" type="submit">
-                        Login
-                    </button>
+                @error('email')
+                    <div class="invalid-feedback">
+                    </div>
+                @enderror
+            </div>
             
-            <hr class="my-3"> <p class="mb-3 mt-3 text-muted">
-                Belum punya akun? <a href="{{ route('register') }}" class="text-decoration-none fw-semibold">Daftar Akun Baru</a>
-            </p>
-            
-            <p class="mb-0 text-muted small">&copy; 2024 MAPN Group. Health & Safety System.</p>
-        </div>
+            <div class="input-group-password form-floating mb-4">
+                <input type="password" class="form-control @error('password') is-invalid @enderror" id="floatingPassword" 
+                       placeholder="Kata Sandi" name="password" required autocomplete="current-password">
+                <label for="floatingPassword">Kata Sandi</label>
+                <span class="password-toggle" id="togglePassword">
+                    <i class="bi bi-eye-slash"></i> </span>
+
+                @error('password')
+                    <div class="invalid-feedback">
+                    </div>
+                @enderror
+            </div>
+
+            {{-- D-GRID SEKARANG MENJADI HANYA UNTUK TOMBOL --}}
+            <div class="d-grid gap-2">
+                <button class="btn btn-lg btn-primary" type="submit">
+                    Login
+                </button>
+            </div>
+        </form>
+        
+        <hr class="my-3"> 
+        <p class="mb-3 mt-3 text-muted">
+            Belum punya akun? <a href="{{ route('register') }}" class="text-decoration-none fw-semibold">Daftar Akun Baru</a>
+        </p>
+        
+        <p class="mb-0 text-muted small">&copy; 2024 MAPN Group. Health & Safety System.</p>
+
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <script>
-        const togglePassword = document.querySelector('#togglePassword');
-        const password = document.querySelector('#floatingPassword');
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+    const togglePassword = document.querySelector('#togglePassword');
+    const password = document.querySelector('#floatingPassword');
 
-        togglePassword.addEventListener('click', function (e) {
-            const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-            password.setAttribute('type', type);
-            
-            const icon = this.querySelector('i');
-            if (icon.classList.contains('bi-eye-slash')) {
-                icon.classList.remove('bi-eye-slash');
-                icon.classList.add('bi-eye'); 
-            } else {
-                icon.classList.remove('bi-eye');
-                icon.classList.add('bi-eye-slash');
-            }
-        });
-    </script>
+    togglePassword.addEventListener('click', function (e) {
+        const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+        password.setAttribute('type', type);
+        
+        const icon = this.querySelector('i');
+        if (icon.classList.contains('bi-eye-slash')) {
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye'); 
+        } else {
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        }
+    });
+</script>
 </body>
 </html>
