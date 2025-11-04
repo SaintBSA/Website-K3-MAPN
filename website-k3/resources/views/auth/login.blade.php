@@ -1,191 +1,212 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Pelaporan K3 - MAPN Group</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    
+
     <style>
-        /* Gaya Kustom dari HTML Anda (Dibiarkan sama) */
-        body {
-            font-family: 'Inter', sans-serif; 
-            background-color: #f8f9fa;
-        }
-        .k3-background {
-            background-image: url('{{ asset('assets/image/safetybg.jpeg') }}'); 
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-        }
-        .k3-background::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.1);
-            backdrop-filter: blur(2px);
-        }
-        .login-container {
-            background-color: #ffffff; 
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-            max-width: 380px;
-            width: 100%;
-            position: relative;
-            z-index: 10;
-        }
-        .logo-mapn {
-            max-width: 120px;
-            height: auto;
-            margin-bottom: 25px !important;
-        }
-        .login-title {
-            font-weight: 600;
-            color: #343a40;
-        }
-        .form-floating input.form-control {
-            border-radius: 8px;
-            border-color: #ced4da; 
-            min-height: calc(3.5rem + 2px); 
-            font-size: 1.1rem; 
-            padding-top: 1.5rem; 
-        }
-        .form-floating > label {
-            padding: 1rem .75rem;
-            font-size: 0.9rem;
-        }
-        .form-floating > .form-control:focus ~ label,
-        .form-floating > .form-control:not(:placeholder-shown) ~ label {
-             transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
-        }
-        .btn-primary {
-            background-color: #0d6efd; 
-            border-color: #0d6efd;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: background-color 0.3s ease;
-        }
-        .btn-primary:hover {
-            background-color: #0b5ed7;
-            border-color: #0b5ed7;
-        }
-        .password-toggle {
-            position: absolute;
-            right: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            color: #6c757d;
-            z-index: 20;
-        }
-        .input-group-password {
-            position: relative;
-        }
-        .form-floating .is-invalid {
-            border-color: #dc3545!important;
-        }
-        /* Memperbaiki posisi pesan invalid-feedback agar tidak menimpa elemen lain */
-        .invalid-feedback {
-            margin-top: 0.25rem; /* Tambahkan sedikit margin atas */
-            font-size: 0.875em;
-            text-align: left;
-            display: block; /* Pastikan selalu ditampilkan di bawah elemen jika ada error */
-        }
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: #f8f9fa;
+    }
+
+    .k3-background {
+        background-image: url('{{ asset('assets/image/safetybg.jpeg') }}');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    .k3-background::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(2px);
+    }
+
+    .login-container {
+        background-color: #ffffff;
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+        max-width: 380px;
+        width: 100%;
+        position: relative;
+        z-index: 10;
+    }
+
+    .logo-mapn {
+        max-width: 120px;
+        height: auto;
+        margin-bottom: 25px !important;
+    }
+
+    .login-title {
+        font-weight: 600;
+        color: #343a40;
+    }
+
+    .form-floating input.form-control {
+        border-radius: 8px;
+        border-color: #ced4da;
+        min-height: calc(3.5rem + 2px);
+        font-size: 1.1rem;
+        padding-top: 1.5rem;
+    }
+
+    .form-floating>label {
+        padding: 1rem .75rem;
+        font-size: 0.9rem;
+    }
+
+    .form-floating>.form-control:focus~label,
+    .form-floating>.form-control:not(:placeholder-shown)~label {
+        transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+    }
+
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0b5ed7;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        cursor: pointer;
+        color: #6c757d;
+        z-index: 20;
+    }
+
+    .input-group-password {
+        position: relative;
+    }
+
+    .form-floating .is-invalid {
+        border-color: #dc3545 !important;
+    }
+
+    .invalid-feedback {
+        margin-top: 0.25rem;
+        font-size: 0.875em;
+        text-align: left;
+        display: block;
+    }
     </style>
 </head>
+
 <body>
 
-<div class="k3-background">
-    <div class="login-container text-center">
-        
-        <img src="{{ asset('assets/OIP.jpeg') }}" alt="MAPN Logo" class="logo-mapn mb-4">
-        
-        <h1 class="h5 mb-2 login-title">Sistem Pelaporan K3</h1>
-        <p class="text-muted mb-4">MAPN Group Production Facility</p>
+    <div class="k3-background">
+        <div class="login-container text-center">
 
-        {{-- BLOK PEMBERITAHUAN ERROR GLOBAL --}}
-        @if ($errors->any())
+            <img src="{{ asset('assets/OIP.jpeg') }}" alt="MAPN Logo" class="logo-mapn mb-4">
+
+            <h1 class="h5 mb-2 login-title">Sistem Pelaporan K3</h1>
+            <p class="text-muted mb-4">MAPN Group Production Facility</p>
+
+            @if ($errors->any())
             <div class="alert alert-danger mb-4 text-start">
                 Login Gagal. Mohon periksa kembali Email dan Password Anda.
                 {{-- Anda bisa menampilkan detail error jika diperlukan, tapi ini lebih baik untuk user experience --}}
             </div>
-        @endif
-        
-        {{-- INTEGRASI FORM LARAVEL --}}
-        <form method="POST" action="{{ route('login') }}">
-            @csrf
-            
-            <div class="form-floating mb-3">
-                <input type="email" class="form-control @error('email') is-invalid @enderror" id="floatingInput" 
-                       placeholder="name@example.com" name="email" value="{{ old('email') }}" required autocomplete="email" autofocus>
-                <label for="floatingInput">Alamat Email Perusahaan</label>
-                
-                @error('email')
+            @endif
+
+            <form method="POST" action="{{ route('login') }}">
+                @csrf
+
+                <div class="form-floating mb-3">
+                    <input type="email" class="form-control @error('email') is-invalid @enderror" id="floatingInput"
+                        placeholder="name@example.com" name="email" value="{{ old('email') }}" required
+                        autocomplete="email" autofocus>
+                    <label for="floatingInput">Alamat Email Perusahaan</label>
+
+                    @error('email')
                     <div class="invalid-feedback">
                     </div>
-                @enderror
-            </div>
-            
-            <div class="input-group-password form-floating mb-4">
-                <input type="password" class="form-control @error('password') is-invalid @enderror" id="floatingPassword" 
-                       placeholder="Kata Sandi" name="password" required autocomplete="current-password">
-                <label for="floatingPassword">Kata Sandi</label>
-                <span class="password-toggle" id="togglePassword">
-                    <i class="bi bi-eye-slash"></i> </span>
+                    @enderror
+                </div>
 
-                @error('password')
+                <div class="input-group-password form-floating mb-4">
+                    <input type="password" class="form-control @error('password') is-invalid @enderror"
+                        id="floatingPassword" placeholder="Kata Sandi" name="password" required
+                        autocomplete="current-password">
+                    <label for="floatingPassword">Kata Sandi</label>
+                    <span class="password-toggle" id="togglePassword">
+                        <i class="bi bi-eye-slash"></i> </span>
+
+                    @error('password')
                     <div class="invalid-feedback">
                     </div>
-                @enderror
-            </div>
+                    @enderror
+                </div>
 
-            {{-- D-GRID SEKARANG MENJADI HANYA UNTUK TOMBOL --}}
-            <div class="d-grid gap-2">
-                <button class="btn btn-lg btn-primary" type="submit">
-                    Login
-                </button>
-            </div>
-        </form>
-        
-        <hr class="my-3"> 
-        <p class="mb-3 mt-3 text-muted">
-            Belum punya akun? <a href="{{ route('register') }}" class="text-decoration-none fw-semibold">Daftar Akun Baru</a>
-        </p>
-        
-        <p class="mb-0 text-muted small">&copy; 2024 MAPN Group. Health & Safety System.</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-lg btn-primary" type="submit">
+                        Login
+                    </button>
+                </div>
+            </form>
 
+            <hr class="my-3">
+            <p class="mb-3 mt-3 text-muted">
+                Belum punya akun? <a href="{{ route('register') }}" class="text-decoration-none fw-semibold">Daftar Akun
+                    Baru</a>
+            </p>
+
+            <p class="mb-0 text-muted small">&copy; 2024 MAPN Group. Health & Safety System.</p>
+
+        </div>
     </div>
-</div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-<script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+    </script>
+
+    <script>
     const togglePassword = document.querySelector('#togglePassword');
     const password = document.querySelector('#floatingPassword');
 
-    togglePassword.addEventListener('click', function (e) {
+    togglePassword.addEventListener('click', function(e) {
         const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
         password.setAttribute('type', type);
-        
+
         const icon = this.querySelector('i');
         if (icon.classList.contains('bi-eye-slash')) {
             icon.classList.remove('bi-eye-slash');
-            icon.classList.add('bi-eye'); 
+            icon.classList.add('bi-eye');
         } else {
             icon.classList.remove('bi-eye');
             icon.classList.add('bi-eye-slash');
         }
     });
-</script>
+    </script>
+
 </body>
+
 </html>

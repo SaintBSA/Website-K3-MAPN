@@ -17,6 +17,6 @@ class MasterOption extends Model
     protected $fillable = [
         'category',
         'name',
-        'is_active', // Sertakan is_active agar MasterOption::create dapat mengisinya
+        'is_active',
     ];
 }

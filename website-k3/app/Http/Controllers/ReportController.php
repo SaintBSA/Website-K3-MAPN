@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Report;
 use App\Models\MasterOption;
-use App\Models\StatusLog; // <-- IMPORT MODEL LOG
+use App\Models\StatusLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -14,14 +14,11 @@ class ReportController extends Controller
 
     public function index(Request $request) 
     {
-        // 1. Ambil data master untuk dropdown filter
         $types = MasterOption::where('category', 'jenis')->where('is_active', 1)->get();
         $locations = MasterOption::where('category', 'lokasi')->where('is_active', 1)->get();
 
-        // 2. Inisiasi Query Dasar
         $reportsQuery = Report::query();
 
-        // 3. Terapkan Filter (Logic sama seperti sebelumnya)
         if ($request->filled('type')) {
             $reportsQuery->where('type', $request->input('type'));
         }
@@ -38,7 +35,6 @@ class ReportController extends Controller
             $reportsQuery->whereDate('incident_datetime', '<=', $request->input('date_to'));
         }
 
-        // 4. Terapkan Sorting
         $sortBy = $request->input('sort', 'latest');
 
         if ($sortBy == 'oldest') {
@@ -47,7 +43,6 @@ class ReportController extends Controller
             $reportsQuery->orderBy('created_at', 'desc');
         }
 
-        // 5. Eksekusi Query dan Ambil Data
         $reports = $reportsQuery->get();
 
         return view('reports.index', compact('reports', 'types', 'locations'));
@@ -104,11 +99,10 @@ class ReportController extends Controller
 
         $report->save();
         
-        // CATAT LOG AWAL: Status awal 'Pending' dan Prioritas 'Rendah'
         StatusLog::create([
             'report_id' => $report->id,
             'user_id' => Auth::id(),
-            'old_status' => null, // Status awal belum ada
+            'old_status' => null,
             'new_status' => $report->status,
             'old_priority' => null,
             'new_priority' => $report->priority,
@@ -122,7 +116,6 @@ class ReportController extends Controller
 
     public function edit($id)
     {
-        // MUAT LOG HISTORY di sini
         $report = Report::with('statusLogs.user')->findOrFail($id); 
         $statuses = MasterOption::where('category', 'status')->where('is_active', 1)->get();
         $priorities = MasterOption::where('category', 'prioritas')->where('is_active', 1)->get();
@@ -133,29 +126,23 @@ class ReportController extends Controller
     public function update(Request $request, $id)
     {
         $report = Report::findOrFail($id);
-        
-        // Simpan nilai lama sebelum update
         $oldStatus = $report->status;
         $oldPriority = $report->priority;
         
-        // 1. Validasi
         $request->validate([
             'status' => 'required|string',
             'priority' => 'required|string',
             'spv_feedback' => 'nullable|string', 
         ]);
 
-        // 2. Update data Report
         $report->status = $request->status;
         $report->priority = $request->priority;
         $report->spv_feedback = $request->spv_feedback; 
         
         $report->save();
 
-        // 3. LOGIKA TRACKING BARU: Catat Perubahan Status/Prioritas
         $feedbackProvided = $request->filled('spv_feedback');
         
-        // Cek apakah ada perubahan status ATAU perubahan prioritas
         if ($oldStatus != $report->status || $oldPriority != $report->priority || $feedbackProvided) {
             
             StatusLog::create([
@@ -169,8 +156,7 @@ class ReportController extends Controller
                 'action_at' => now(), 
             ]);
             
-        } 
-        // Jika tidak ada perubahan status/prioritas dan tidak ada feedback baru, tidak perlu log.
+        }
 
 
         return redirect()->route('reports.index')->with('success', 'Status dan feedback laporan berhasil diperbarui!');
@@ -178,7 +164,6 @@ class ReportController extends Controller
 
     public function show($id)
     {
-        // MUAT LOG HISTORY di sini
         $report = Report::with('statusLogs.user')->findOrFail($id);
         return view('reports.show', compact('report'));
     }

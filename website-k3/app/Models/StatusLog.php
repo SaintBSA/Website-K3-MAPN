@@ -6,13 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 class StatusLog extends Model
 {
-    // Nama tabel disesuaikan dengan skema yang dibuat
     protected $table = 'status_logs'; 
 
-    // Menonaktifkan timestamps bawaan karena kita menggunakan 'action_at'
     public $timestamps = false; 
     
-    // Menetapkan kolom yang diizinkan untuk diisi
     protected $fillable = [
         'report_id',
         'user_id',
@@ -24,7 +21,6 @@ class StatusLog extends Model
         'action_at'
     ];
     
-    // Definisikan relasi ke Report dan User
     public function report()
     {
         return $this->belongsTo(Report::class);
